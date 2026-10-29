@@ -98,7 +98,7 @@ export default function App() {
       </Routes>
 
       <footer className="footer">
-        ItmPlay · A Movie Streaming Platform
+        ItmPlay · A Movie Streaming Platform All Rights Reserved.
       </footer>
     </BrowserRouter>
   );

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import MovieCard from "../7166_components/7166_MovieCard.jsx";
@@ -36,7 +35,12 @@ export default function Home() {
         }
 
         const data = await response.json();
-        setMovies(data.movies || []);
+
+        // Show only featured movies on the homepage
+        const allMovies = data.movies || [];
+        setMovies(
+          allMovies.filter((movie) => movie.featured === true)
+        );
       } catch (err) {
         setError(err.message);
       } finally {
@@ -85,8 +89,8 @@ export default function Home() {
       <section className="movie-section">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">FROM OUR COLLECTION</p>
-            <h2>Popular Movies</h2>
+            <p className="eyebrow">HANDPICKED FOR YOU</p>
+            <h2>Featured Movies</h2>
           </div>
 
           <Link to="/movies" className="subtle-link">
@@ -94,19 +98,24 @@ export default function Home() {
           </Link>
         </div>
 
-        {loading && <p>Loading movies...</p>}
+        {loading && <p>Loading featured movies...</p>}
 
         {error && <p>Unable to load movies: {error}</p>}
 
         {!loading && !error && movies.length === 0 && (
-          <p>No movies found. Add some using MongoDB Compass.</p>
+          <p>
+            No featured movies yet. Mark some movies as featured
+            in the Admin Dashboard.
+          </p>
         )}
 
-        <div className="movie-grid">
-          {movies.map((movie) => (
-            <MovieCard key={movie._id} movie={movie} />
-          ))}
-        </div>
+        {!loading && !error && movies.length > 0 && (
+          <div className="movie-grid">
+            {movies.map((movie) => (
+              <MovieCard key={movie._id} movie={movie} />
+            ))}
+          </div>
+        )}
       </section>
     </main>
   );

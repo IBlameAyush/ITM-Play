@@ -1,10 +1,13 @@
-
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../7166_models/7166_User.js";
 import authenticateUser from "../7166_middleware/7166_auth.js";
 import Movie from "../7166_models/7166_Movie.js";
+import {
+  registerSchema,
+  loginSchema,
+} from "../7166_validations/7166_authValidation.js";
 
 const router = express.Router();
 
@@ -28,28 +31,22 @@ function setTokenCookie(res, token) {
 // Register
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { error, value } = registerSchema.validate(req.body, {
+      abortEarly: false,
+      convert: true,
+    });
 
-    if (
-      !name?.trim() ||
-      !email?.trim() ||
-      typeof password !== "string" ||
-      password.length < 8
-    ) {
+    if (error) {
       return res.status(400).json({
         success: false,
-        message: "Enter your name, email and a password of at least 8 characters.",
+        message: "Invalid registration details.",
+        errors: error.details.map((detail) => detail.message),
       });
     }
 
-    if (password.length > 72) {
-      return res.status(400).json({
-        success: false,
-        message: "Password must be 72 characters or fewer.",
-      });
-    }
+    const { name, email, password } = value;
+    const normalizedEmail = email.toLowerCase();
 
-    const normalizedEmail = email.trim().toLowerCase();
     const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser) {
@@ -62,14 +59,14 @@ router.post("/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = await User.create({
-      name: name.trim(),
+      name,
       email: normalizedEmail,
       password: hashedPassword,
     });
 
     setTokenCookie(res, createToken(user._id));
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Account created successfully.",
       user: {
@@ -88,7 +85,7 @@ router.post("/register", async (req, res) => {
 
     console.error("Registration error:", error.message);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Unable to create account.",
     });
@@ -98,28 +95,27 @@ router.post("/register", async (req, res) => {
 // Login
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { error, value } = loginSchema.validate(req.body, {
+      abortEarly: false,
+      convert: true,
+    });
 
-    if (
-      typeof email !== "string" ||
-      typeof password !== "string" ||
-      !email.trim() ||
-      !password
-    ) {
+    if (error) {
       return res.status(400).json({
         success: false,
-        message: "Enter your email and password.",
+        message: "Invalid login details.",
+        errors: error.details.map((detail) => detail.message),
       });
     }
 
-    const user = await User.findOne({
-      email: email.trim().toLowerCase(),
-    }).select("+password");
+    const { email, password } = value;
+    const normalizedEmail = email.toLowerCase();
 
-    if (
-      !user ||
-      !(await bcrypt.compare(password, user.password))
-    ) {
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      "+password"
+    );
+
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password.",
@@ -128,7 +124,7 @@ router.post("/login", async (req, res) => {
 
     setTokenCookie(res, createToken(user._id));
 
-    res.json({
+    return res.json({
       success: true,
       message: "Login successful.",
       user: {
@@ -140,7 +136,7 @@ router.post("/login", async (req, res) => {
   } catch (error) {
     console.error("Login error:", error.message);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Unable to log in.",
     });
@@ -159,7 +155,7 @@ router.get("/me", authenticateUser, async (req, res) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       user: {
         id: user._id,
@@ -169,7 +165,7 @@ router.get("/me", authenticateUser, async (req, res) => {
       },
     });
   } catch {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Unable to retrieve your account.",
     });
@@ -184,18 +180,16 @@ router.post("/logout", (req, res) => {
     sameSite: "lax",
   });
 
-  res.json({
+  return res.json({
     success: true,
     message: "Logged out successfully.",
   });
 });
 
-
 /* Get the logged-in user's watchlist */
 router.get("/watchlist", authenticateUser, async (req, res) => {
   try {
-    const user = await User.findById(req.userId)
-      .populate("watchlist");
+    const user = await User.findById(req.userId).populate("watchlist");
 
     if (!user) {
       return res.status(404).json({
@@ -204,12 +198,12 @@ router.get("/watchlist", authenticateUser, async (req, res) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       movies: user.watchlist.filter(Boolean),
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Unable to load watchlist.",
     });
@@ -232,12 +226,12 @@ router.post("/watchlist/:movieId", authenticateUser, async (req, res) => {
       $addToSet: { watchlist: movie._id },
     });
 
-    res.json({
+    return res.json({
       success: true,
       message: "Movie added to your library.",
     });
   } catch (error) {
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
       message: "Unable to add movie to watchlist.",
     });
@@ -254,18 +248,17 @@ router.delete(
         $pull: { watchlist: req.params.movieId },
       });
 
-      res.json({
+      return res.json({
         success: true,
         message: "Movie removed from your library.",
       });
     } catch (error) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: "Unable to remove movie from watchlist.",
       });
     }
   }
 );
-
 
 export default router;

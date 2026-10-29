@@ -1,11 +1,15 @@
 
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import cookieParser from "cookie-parser";
+
 import movieRoutes from "./7166_routes/7166_movieRoutes.js";
 import authRoutes from "./7166_routes/7166_authRoutes.js";
 
 const app = express();
+
+app.use(helmet());
 
 app.use(
   cors({
