@@ -55,7 +55,13 @@ ITM-Play/
 │       │   ├── 7166_Navbar.jsx
 │       │   ├── 7166_MovieCard.jsx
 │       │   ├── 7166_FeaturedCarousel.jsx
-│       │   └── reactbits/            # copied React Bits components
+│       │   ├── 7166_BlurText.jsx
+│       │   ├── 7166_CountUp.jsx
+│       │   ├── 7166_FadeContent.jsx
+│       │   ├── 7166_ShinyText.jsx
+│       │   ├── 7166_SpotlightCard.jsx
+│       │   ├── 7166_ShinyText.css
+│       │   └── 7166_SpotlightCard.css         
 │       └── 7166_pages/
 │           ├── 7166_Home.jsx
 │           ├── 7166_Movies.jsx
