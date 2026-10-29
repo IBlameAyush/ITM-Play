@@ -4,10 +4,10 @@ A full-stack movie streaming web application built with the **MERN stack** for t
 
 **Group Code:** 7166
 
-| Name | Enrollment |
-|---|---|
-| Jinit Shah | 24C21090 |
-| Ayush Yadav | 24C21106 |
+| Name | 
+|---|
+| Jinit Shah | 
+| Ayush Yadav | 
 
 ---
 
